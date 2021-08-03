@@ -77,12 +77,21 @@ namespace ComputerShopBackend.Controllers
             if (userExists != null)
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User already exists!" });
 
+            var mailExists = await userManager.FindByEmailAsync(model.Email);
+            if (mailExists != null)
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "Email already in use!" });
+
             ApplicationUser user = new ApplicationUser()
             {
                 Email = model.Email,
                 SecurityStamp = Guid.NewGuid().ToString(),
                 UserName = model.Username
             };
+
+            var passwordIsValid = await userManager.PasswordValidators.FirstOrDefault().ValidateAsync(userManager, user, model.Password);
+            if (!passwordIsValid.Succeeded)
+                return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "Password must be at least 8 characters long, and contain at least one of each of uppercase, lowercase, numeric and special characters!" });
+
             var result = await userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User creation failed! Please check user details and try again." });

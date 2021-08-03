@@ -13,6 +13,7 @@ namespace ComputerShopBackend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = UserRoles.Admin + "," + UserRoles.User)]
     public class ProductsController : ControllerBase
     {
         private readonly ComputerShopContext _context;
@@ -48,7 +49,7 @@ namespace ComputerShopBackend.Controllers
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [Authorize(Roles = UserRoles.Admin)]
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutProduct(long id, Product product)
+        public async Task<IActionResult> PutProduct(long id, [FromBody] Product product)
         {
             if (id != product.Id)
             {
