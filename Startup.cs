@@ -47,7 +47,9 @@ namespace ComputerShopBackend
 
 
             services.AddDbContext<ComputerShopContext>(opt => opt.UseSqlServer(Configuration.GetConnectionString("ComputerShop")));
-            services.AddControllers();
+            services.AddControllers().AddNewtonsoftJson(options =>
+                options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+            );
 
             services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<ComputerShopContext>()

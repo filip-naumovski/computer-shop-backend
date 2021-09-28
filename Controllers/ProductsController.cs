@@ -27,12 +27,19 @@ namespace ComputerShopBackend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
         {
-            return await _context.Products.ToListAsync();
+            var products = await _context.Products.Where(p => !p.OrderId.HasValue && !p.CartId.HasValue).ToListAsync();
+            foreach(var product in products)
+            {
+
+                    Console.WriteLine("product cart: " + product.CartId);
+
+            }
+            return products;
         }
 
         // GET: api/Products/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Product>> GetProduct(long id)
+        public async Task<ActionResult<Product>> GetProduct(int id)
         {
             var product = await _context.Products.FindAsync(id);
 
@@ -49,7 +56,7 @@ namespace ComputerShopBackend.Controllers
         // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [Authorize(Roles = UserRoles.Admin)]
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutProduct(long id, [FromBody] Product product)
+        public async Task<IActionResult> PutProduct(int id, [FromBody] Product product)
         {
             if (id != product.Id)
             {
@@ -93,7 +100,7 @@ namespace ComputerShopBackend.Controllers
         // DELETE: api/Products/5
         [Authorize(Roles = UserRoles.Admin)]
         [HttpDelete("{id}")]
-        public async Task<ActionResult<Product>> DeleteProduct(long id)
+        public async Task<ActionResult<Product>> DeleteProduct(int id)
         {
             var product = await _context.Products.FindAsync(id);
             if (product == null)
@@ -107,7 +114,7 @@ namespace ComputerShopBackend.Controllers
             return product;
         }
 
-        private bool ProductExists(long id)
+        private bool ProductExists(int id)
         {
             return _context.Products.Any(e => e.Id == id);
         }

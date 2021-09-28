@@ -1,4 +1,5 @@
 ﻿using ComputerShopBackend.Authentication;
+using ComputerShopBackend.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -21,12 +22,14 @@ namespace ComputerShopBackend.Controllers
         private readonly UserManager<ApplicationUser> userManager;
         private readonly RoleManager<IdentityRole> roleManager;
         private readonly IConfiguration _configuration;
+        private readonly ComputerShopContext _context;
 
-        public AuthenticateController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
+        public AuthenticateController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration, ComputerShopContext context)
         {
             this.userManager = userManager;
             this.roleManager = roleManager;
             _configuration = configuration;
+            _context = context;
         }
 
         [HttpPost]
@@ -92,9 +95,19 @@ namespace ComputerShopBackend.Controllers
             if (!passwordIsValid.Succeeded)
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "Password must be at least 8 characters long, and contain at least one of each of uppercase, lowercase, numeric and special characters!" });
 
+            // Create empty cart for user on register
+            Cart cart = new Cart()
+            {
+                ApplicationUser = user,
+            };
+            user.Cart = cart;
+            _context.Carts.Add(cart);
+
             var result = await userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User creation failed! Please check user details and try again." });
+
+            await _context.SaveChangesAsync();
 
             if (!await roleManager.RoleExistsAsync(UserRoles.User))
                 await roleManager.CreateAsync(new IdentityRole(UserRoles.User));
@@ -119,9 +132,20 @@ namespace ComputerShopBackend.Controllers
                 SecurityStamp = Guid.NewGuid().ToString(),
                 UserName = model.Username
             };
+
+            // Create empty cart for user on register
+            Cart cart = new Cart()
+            {
+                ApplicationUser = user,
+            };
+            user.Cart = cart;
+            _context.Carts.Add(cart);
+
             var result = await userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User creation failed! Please check user details and try again." });
+
+            await _context.SaveChangesAsync();
 
             if (!await roleManager.RoleExistsAsync(UserRoles.Admin))
                 await roleManager.CreateAsync(new IdentityRole(UserRoles.Admin));
